@@ -32,7 +32,9 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 */
 
 #include "py_defines.h"
+#include "datetime.h"
 #include <ultrajson.h>
+#include <time.h>
 
 
 
@@ -54,7 +56,36 @@ void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
 
 JSOBJ Object_newString(wchar_t *start, wchar_t *end)
 {
-    return PyUnicode_FromWideChar (start, (end - start));
+    PyObject *p, *p2;
+    struct tm tm;
+    int res;
+    char *c;
+    Py_ssize_t len;
+
+    p = PyUnicode_FromWideChar (start, (end - start));
+
+    len = PyUnicode_GET_SIZE(p);
+
+    if (len == 24){
+        p2 = PyUnicode_AsASCIIString(p);
+        if (p2 != NULL){
+            c = PyString_AS_STRING(p2);
+
+            if (c != NULL){
+                if(strptime(c, "%Y-%m-%dT%H:%M:%S+0000", &tm) != NULL){
+                    PyObject *d;
+
+                    Py_DECREF(p2);
+                    Py_DECREF(p);
+
+                    return PyDateTime_FromDateAndTime(1900+tm.tm_year, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, 0);
+                }
+            }
+        }
+        PyErr_Clear();
+        return p;
+    }
+    return p;
 }
 
 JSOBJ Object_newTrue(void)
@@ -106,6 +137,7 @@ static void Object_releaseObject(JSOBJ obj)
 
 PyObject* JSONToObj(PyObject* self, PyObject *arg)
 {
+    PyDateTime_IMPORT;
     PyObject *ret;
     PyObject *sarg;
     JSONObjectDecoder decoder = 
