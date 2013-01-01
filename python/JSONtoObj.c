@@ -54,36 +54,83 @@ void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
     return;
 }
 
+JSOBJ Object_try_newDateTime(PyObject *p)
+{
+    PyObject *p2 = PyUnicode_AsASCIIString(p);
+    struct tm tm;
+    char *c;
+
+    if (p2 != NULL)
+    {
+        c = PyString_AS_STRING(p2);
+
+        if (c != NULL)
+        {
+            if (strptime(c, "%Y-%m-%dT%H:%M:%S+0000", &tm) != NULL)
+            {
+                Py_DECREF(p2);
+
+                return PyDateTime_FromDateAndTime(1900+tm.tm_year, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, 0);
+            }
+        }
+        Py_DECREF(p2);
+    }
+    PyErr_Clear();
+    return NULL;
+}
+
+JSOBJ Object_try_newDate(PyObject *p)
+{
+    PyObject *p2 = PyUnicode_AsASCIIString(p);
+    struct tm tm;
+    char *c;
+
+    if (p2 != NULL)
+    {
+        c = PyString_AS_STRING(p2);
+
+        if (c != NULL)
+        {
+            if (strptime(c, "%Y-%m-%d", &tm) != NULL)
+            {
+                Py_DECREF(p2);
+
+                return PyDate_FromDate(1900+tm.tm_year, tm.tm_mon+1, tm.tm_mday);
+            }
+        }
+        Py_DECREF(p2);
+    }
+    PyErr_Clear();
+    return NULL;
+}
+
 JSOBJ Object_newString(wchar_t *start, wchar_t *end)
 {
-    PyObject *p, *p2;
-    struct tm tm;
-    int res;
-    char *c;
+    PyObject *p;
     Py_ssize_t len;
 
     p = PyUnicode_FromWideChar (start, (end - start));
 
     len = PyUnicode_GET_SIZE(p);
 
-    if (len == 24){
-        p2 = PyUnicode_AsASCIIString(p);
-        if (p2 != NULL){
-            c = PyString_AS_STRING(p2);
-
-            if (c != NULL){
-                if(strptime(c, "%Y-%m-%dT%H:%M:%S+0000", &tm) != NULL){
-                    PyObject *d;
-
-                    Py_DECREF(p2);
-                    Py_DECREF(p);
-
-                    return PyDateTime_FromDateAndTime(1900+tm.tm_year, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, 0);
-                }
-            }
+    if (len == 24)
+    {
+        PyObject *date = Object_try_newDateTime(p);
+        if (date != NULL)
+        {
+            Py_DECREF(p);
+            return date;
         }
-        PyErr_Clear();
         return p;
+    }
+    else if (len == 10)
+    {
+        PyObject *date = Object_try_newDate(p);
+        if (date != NULL)
+        {
+            Py_DECREF(p);
+            return date;
+        }
     }
     return p;
 }
