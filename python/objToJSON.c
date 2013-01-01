@@ -165,6 +165,19 @@ static void *PyDateTimeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, s
     return c;
 }
 
+static void *PyDateToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+    PyObject *obj = (PyObject *) _obj;
+    PyObject *str;
+    void *c;
+
+    str = PyObject_CallMethod(obj, "strftime", "(s)", "%Y-%m-%d");
+    *_outLen = PyString_GET_SIZE(str);
+    c = PyString_AS_STRING(str);
+    Py_DECREF(str);
+    return c;
+}
+
 static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
     PyObject *obj = (PyObject *) _obj;
@@ -622,7 +635,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
     if (PyDate_Check(obj))
     {
         PRINTMARK();
-        pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
+        pc->PyTypeToJSON = PyDateToUTF8; tc->type = JT_UTF8;
         return;
     }
     else
