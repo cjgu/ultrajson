@@ -66,7 +66,14 @@ JSOBJ Object_try_newDateTime(PyObject *p)
 
         if (c != NULL)
         {
-            if (strptime(c, "%Y-%m-%dT%H:%M:%S+0000", &tm) != NULL)
+            Py_ssize_t len = PyString_GET_SIZE(p2);
+
+            /* Tries to parse dates of following formats
+             *
+             * 2013-01-23T10:20:45+0000
+             * 2013-01-23T10:20:45.816307+0000
+             */
+            if ((len == 24 || len == 31) && strptime(c, "%Y-%m-%dT%H:%M:%S", &tm) != NULL)
             {
                 Py_DECREF(p2);
 
@@ -113,7 +120,7 @@ JSOBJ Object_newString(wchar_t *start, wchar_t *end)
 
     len = PyUnicode_GET_SIZE(p);
 
-    if (len == 24)
+    if (len == 24 || len == 31)
     {
         PyObject *date = Object_try_newDateTime(p);
         if (date != NULL)
