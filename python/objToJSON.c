@@ -636,7 +636,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
                 if (PyDate_Check(obj))
                 {
                   PRINTMARK();
-                  pc->PyTypeToJSON = PyDateToUTF8; tc->type = JT_UTF;
+                  pc->PyTypeToJSON = PyDateToUTF8; tc->type = JT_UTF8;
                   return;
                 }
                 else
