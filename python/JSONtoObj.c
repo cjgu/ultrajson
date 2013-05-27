@@ -222,6 +222,15 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 
   decoder.preciseFloat = 0;
 
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", g_kwlist, &arg, &opreciseFloat))
+  {
+      return NULL;
+  }
+
+  if (opreciseFloat && PyObject_IsTrue(opreciseFloat))
+  {
+      decoder.preciseFloat = 1;
+  }
 
   if (PyString_Check(arg))
   {
